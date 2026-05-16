@@ -1,0 +1,42 @@
+name: Build Windows Native
+
+on:
+  push:
+    branches: [ main, master, windows-port ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          install: >-
+            base-devel
+            mingw-w64-ucrt-x86_64-toolchain
+            mingw-w64-ucrt-x86_64-zlib
+            mingw-w64-ucrt-x86_64-libdeflate
+            mingw-w64-ucrt-x86_64-isa-l
+
+      - name: Build fastp.exe
+        run: |
+          make clean -f Makefile.windows
+          make -f Makefile.windows -j$(nproc)
+
+      - name: Quick Validation
+        run: ./fastp.exe --version
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: fastp-windows-x64
+          path: fastp.exe
+          retention-days: 7

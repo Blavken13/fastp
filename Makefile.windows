@@ -1,0 +1,24 @@
+# Makefile adaptado para MinGW-w64 UCRT64 (Windows)
+
+CXX = g++
+# Removido -DLIBDEFLATE_DLL para permitir linkagem estática correta
+CXXFLAGS = -std=c++11 -O3 -Wall -march=native -DWIN32 -D_WIN32 -DNO_LIBHWY -fno-omit-frame-pointer -Isrc
+LDFLAGS = -static-libgcc -static-libstdc++ -static -lpthread -lz -lws2_32 -ldeflate -lisal
+
+TARGET = fastp.exe
+SRCS = $(wildcard src/*.cpp)
+SRCS := $(filter-out src/simd.cpp, $(SRCS))
+OBJS = $(SRCS:.cpp=.o)
+
+.PHONY: all clean
+
+all: $(TARGET)
+
+$(TARGET): $(OBJS)
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+
+%.o: %.cpp
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+clean:
+	rm -f $(OBJS) $(TARGET)
